@@ -1,15 +1,65 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ENUMs for declarative, type-safe options
+enum DocumentType {
+  INCOMING
+  OUTGOING
+}
+
+enum SecurityLevel {
+  PUBLIC
+  INTERNAL
+  CONFIDENTIAL
+  SECRET
+}
+
+// Represents an official dispatch or document
+model Document {
+  id              String        @id @default(cuid())
+  serialNumber    String        @unique @map("serial_number") // e.g., "123/CV-HPC"
+  title           String
+  contentSummary  String        @map("content_summary")
+  type            DocumentType
+  securityLevel   SecurityLevel @default(INTERNAL) @map("security_level")
+
+  // The ID of the user who created this document.
+  // This ID comes from the hpc_user microservice.
+  authorId        String        @map("author_id")
+
+  // The ID of the user currently assigned to handle this document.
+  assigneeId      String?       @map("assignee_id")
+
+  // Timestamps
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // A document has a history of workflow steps
+  workflowHistory WorkflowStep[]
+
+  @@map("documents")
+}
+
+// Represents a single step in a document's lifecycle
+model WorkflowStep {
+  id           String   @id @default(cuid())
+  document     Document @relation(fields: [documentId], references: [id])
+  documentId   String   @map("document_id")
+
+  // The user from hpc_user who performed this action
+  actorId      String   @map("actor_id")
+  action       String   // e.g., "CREATE", "SUBMIT_FOR_APPROVAL", "APPROVE", "REJECT"
+  comments     String?
+  timestamp    DateTime @default(now())
+
+  @@map("workflow_steps")
 }
