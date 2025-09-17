@@ -102,9 +102,9 @@ describe("GET /api/v1/documents/:id", () => {
 
   it("should return 404 Not Found for non existent document ID", async () => {
     // Arrange
-    const userPayload = { id: "user-id-for-404-test", role: ["teacher"] };
+    const userPayload = { id: "user-id-for-404-test", roles: ["teacher"] };
     const token = jwt.sign(userPayload, config.jwtSecret!);
-    const nonExistentId = "askdajkdjiqwjidjqwjdks";
+    const nonExistentId = "cl63x8y7z0000a4b0d1e2f3g4";
 
     // Act
     const response = await request(app)
@@ -115,4 +115,8 @@ describe("GET /api/v1/documents/:id", () => {
     expect(response.status).toBe(404);
     expect(response.body.message).toBe("Document not found");
   });
+});
+
+describe("PUT /api/v1/documents/:id", () => {
+  it("should update a document successfully", async () => {});
 });
