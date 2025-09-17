@@ -329,4 +329,60 @@ describe("POST /api/v1/documents/:id/actions", () => {
     // Assert
     expect(response.status).toBe(400);
   });
+
+  it("should allow an assigned user to REJECT a document", async () => {
+    // Arrange
+    const approverPayload = { id: "approver-user-id", roles: ["admin"] };
+    const token = jwt.sign(approverPayload, config.jwtSecret!);
+
+    const document = await prisma.document.create({
+      data: {
+        serialNumber: "ACTION-004",
+        title: "To Be Rejcted",
+        contentSummary: "Summary",
+        type: "INCOMING",
+        authorId: "another-author",
+        status: "PENDING_APPROVAL",
+        assigneeId: approverPayload.id,
+      },
+    });
+
+    // Act
+    const response = await request(app)
+      .post(`/api/v1/documents/${document.id}/actions`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ action: "REJECT", comment: "Needs revisions" });
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("REJECTED");
+    expect(response.body.assigneeId).toBeNull();
+  });
+
+  it("should allow the author to ISSUE an approved document", async () => {
+    // Arrange
+    const authorPayload = { id: "author-user-id", roles: ["teacher"] };
+    const token = jwt.sign(authorPayload, config.jwtSecret!);
+
+    const document = await prisma.document.create({
+      data: {
+        serialNumber: "ACTION-005",
+        title: "To Be Issued",
+        contentSummary: "Summary",
+        type: "OUTGOING",
+        authorId: authorPayload.id,
+        status: "APPROVED",
+      },
+    });
+
+    // Act
+    const response = await request(app)
+      .post(`/api/v1/documents/${document.id}/actions`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ action: "ISSUE", comment: "Officially dispatched." });
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("ISSUED");
+  });
 });
