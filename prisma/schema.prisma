@@ -23,27 +23,32 @@ enum SecurityLevel {
   SECRET
 }
 
+enum DocumentStatus {
+  DRAFT // The document has been created but not submitted
+  PENDING_APPROVAL // Submitted and waiting for a decision
+  APPROVED // Approved by the assignee
+  REJECTED // Rejected by the assignee
+  ISSUED // Finalized and officially sent
+}
+
 // Represents an official dispatch or document
 model Document {
-  id              String        @id @default(cuid())
-  serialNumber    String        @unique @map("serial_number") // e.g., "123/CV-HPC"
-  title           String
-  contentSummary  String        @map("content_summary")
-  type            DocumentType
-  securityLevel   SecurityLevel @default(INTERNAL) @map("security_level")
+  id             String        @id @default(cuid())
+  serialNumber   String        @unique @map("serial_number")
+  title          String
+  contentSummary String        @map("content_summary")
+  type           DocumentType
+  securityLevel  SecurityLevel @default(INTERNAL) @map("security_level")
 
-  // The ID of the user who created this document.
-  // This ID comes from the hpc_user microservice.
-  authorId        String        @map("author_id")
+  authorId   String  @map("author_id")
+  assigneeId String? @map("assignee_id")
 
-  // The ID of the user currently assigned to handle this document.
-  assigneeId      String?       @map("assignee_id")
+  // Add the new status field
+  status DocumentStatus @default(DRAFT)
 
-  // Timestamps
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  // A document has a history of workflow steps
   workflowHistory WorkflowStep[]
 
   @@map("documents")
@@ -51,15 +56,15 @@ model Document {
 
 // Represents a single step in a document's lifecycle
 model WorkflowStep {
-  id           String   @id @default(cuid())
-  document     Document @relation(fields: [documentId], references: [id])
-  documentId   String   @map("document_id")
+  id         String   @id @default(cuid())
+  document   Document @relation(fields: [documentId], references: [id])
+  documentId String   @map("document_id")
 
   // The user from hpc_user who performed this action
-  actorId      String   @map("actor_id")
-  action       String   // e.g., "CREATE", "SUBMIT_FOR_APPROVAL", "APPROVE", "REJECT"
-  comments     String?
-  timestamp    DateTime @default(now())
+  actorId   String   @map("actor_id")
+  action    String // e.g., "CREATE", "SUBMIT_FOR_APPROVAL", "APPROVE", "REJECT"
+  comments  String?
+  timestamp DateTime @default(now())
 
   @@map("workflow_steps")
 }
