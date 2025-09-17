@@ -1,0 +1,32 @@
+services:
+  # Development Database
+  db_dev:
+    image: postgres:15
+    container_name: hpc_dispatch_db_dev
+    restart: always
+    environment:
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: hpc_dispatch_dev
+    ports:
+      - "5433:5432" # Map container port 5432 to host port 5433
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+
+  # Test Database
+  db_test:
+    image: postgres:15
+    container_name: hpc_dispatch_db_test
+    restart: always
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: hpc_dispatch_test
+    ports:
+      - "5434:5432" # Map container port 5432 to host port 5434
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_dev_data:
+  postgres_test_data:
