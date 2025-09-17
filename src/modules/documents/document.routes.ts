@@ -1,25 +1,29 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import { Router } from "express";
+import { z } from "zod";
 import { documentController } from "./document.controller";
 import { authenticate } from "../../core/middleware/auth.middleware";
 import { authorize } from "../../core/middleware/authorization.middleware";
-import { createDocumentValidator } from "./document.validator";
+import {
+  createDocumentValidator,
+  updateDocumentValidator,
+} from "./document.validator";
 import { handleValidationErrors } from "../../core/middleware/validation.middleware";
-import { updateDocumentValidator } from "./document.validator";
-import { CreateDocumentSchema, DocumentSchema } from "./document.schema";
-
-// This file defines API endpoitns for documents
-// It connects the routes to authentication middleware and controller function
-
-const router = Router();
-
-// All document routes require authentication
-// router.use(authenticate);
+import {
+  CreateDocumentSchema,
+  DocumentSchema,
+  UpdateDocumentSchema,
+} from "./document.schema";
 
 export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
   const router = Router();
+  const commonResponses = {
+    401: { description: "Unauthorized" },
+    403: { description: "Forbidden" },
+    404: { description: "Resource not found" },
+  };
 
-  // Register the OpenAPI path
+  // POST /documents
   registry.registerPath({
     method: "post",
     path: "/documents",
@@ -38,34 +42,42 @@ export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
       201: {
         description: "Document created successfully",
         content: {
-          "application/json": {
-            schema: DocumentSchema,
-          },
+          "application/json": { schema: DocumentSchema },
         },
       },
-      // Add other responses for better documentation
       400: { description: "Bad Request" },
-      401: { description: "Unauthorized" },
-      403: { description: "Forbidden" },
+      ...commonResponses,
     },
   });
 
-  // Define routes
   router.post(
     "/",
     authenticate,
     authorize(["admin", "teacher"]),
-    createDocumentValidator, // 1. Validate input
-    handleValidationErrors, // 2. Handle any validation errors
-    documentController.createDocument, // 3. Pass to controller
+    createDocumentValidator,
+    handleValidationErrors,
+    documentController.createDocument,
   );
 
-  router.get(
-    "/",
-    authenticate,
-    authorize(["admin", "teacher"]),
-    documentController.getAllDocuments,
-  );
+  // GET /documents/{id}
+  registry.registerPath({
+    method: "get",
+    path: "/documents/{id}",
+    summary: "Get a single document by ID",
+    tags: ["Documents"],
+    request: {
+      params: z.object({ id: z.string().cuid() }),
+    },
+    responses: {
+      200: {
+        description: "Document details",
+        content: {
+          "application/json": { schema: DocumentSchema },
+        },
+      },
+      ...commonResponses,
+    },
+  });
 
   router.get(
     "/:id",
@@ -73,6 +85,32 @@ export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
     authorize(["admin", "teacher"]),
     documentController.getDocumentById,
   );
+
+  // PUT /documents/{id}
+  registry.registerPath({
+    method: "put",
+    path: "/documents/{id}",
+    summary: "Update an existing document",
+    tags: ["Documents"],
+    request: {
+      params: z.object({ id: z.string().cuid() }),
+      body: {
+        content: {
+          "application/json": { schema: UpdateDocumentSchema.shape.body },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: "Document updated successfully",
+        content: {
+          "application/json": { schema: DocumentSchema },
+        },
+      },
+      400: { description: "Bad Request" },
+      ...commonResponses,
+    },
+  });
 
   router.put(
     "/:id",
@@ -82,6 +120,21 @@ export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
     handleValidationErrors,
     documentController.updateDocument,
   );
+
+  // DELETE /documents/{id}
+  registry.registerPath({
+    method: "delete",
+    path: "/documents/{id}",
+    summary: "Delete a document (Admins only)",
+    tags: ["Documents"],
+    request: {
+      params: z.object({ id: z.string().cuid() }),
+    },
+    responses: {
+      204: { description: "Document deleted successfully" },
+      ...commonResponses,
+    },
+  });
 
   router.delete(
     "/:id",

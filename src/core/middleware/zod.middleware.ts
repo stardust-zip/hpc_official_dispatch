@@ -13,7 +13,7 @@ export const validate =
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({
-          errors: error.errors.map((e) => ({
+          errors: error.issues.map((e) => ({
             message: e.message,
             path: e.path,
           })),
