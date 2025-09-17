@@ -16,6 +16,13 @@ export interface CreateDocumentData {
   authorId: string;
 }
 
+export interface UpdateDocumentData {
+  serialNumber: string;
+  title: string;
+  contentSummary: string;
+  type: "INCOMING" | "OUTGOING";
+}
+
 // Manages all database operations for the Document model.
 export const documentRepository = {
   async create(data: CreateDocumentData) {
@@ -43,6 +50,13 @@ export const documentRepository = {
   async findAll() {
     return prisma.document.findMany({
       orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async update(id: string, data: UpdateDocumentData) {
+    return prisma.document.update({
+      where: { id },
+      data,
     });
   },
 };

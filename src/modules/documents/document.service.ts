@@ -1,4 +1,8 @@
-import { documentRepository, CreateDocumentData } from "./document.repository";
+import {
+  documentRepository,
+  CreateDocumentData,
+  UpdateDocumentData,
+} from "./document.repository";
 
 // core business logic
 // It calls to the repo and performs logic before
@@ -25,5 +29,23 @@ export const documentService = {
 
   async listAllDocuments() {
     return documentRepository.findAll();
+  },
+
+  async updateDocument(
+    documentId: string,
+    userId: string,
+    data: UpdateDocumentData,
+  ) {
+    const existingDocument = await documentRepository.findById(documentId);
+    if (!existingDocument) {
+      throw new Error("Document not found");
+    }
+
+    // checking if user own the document
+    if (existingDocument.authorId != userId) {
+      throw new Error("Forbidden");
+    }
+
+    return documentRepository.update(documentId, data);
   },
 };

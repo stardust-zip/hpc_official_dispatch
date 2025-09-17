@@ -118,5 +118,69 @@ describe("GET /api/v1/documents/:id", () => {
 });
 
 describe("PUT /api/v1/documents/:id", () => {
-  it("should update a document successfully", async () => {});
+  it("should allow author to update their own document", async () => {
+    // Arrange
+    const userPayload = { id: "author-user-id", roles: ["teacher"] };
+    const token = jwt.sign(userPayload, config.jwtSecret!);
+
+    const document = await prisma.document.create({
+      data: {
+        serialNumber: "PUT-001",
+        title: "Original Title",
+        contentSummary: "Original Summary",
+        type: "OUTGOING",
+        authorId: userPayload.id,
+      },
+    });
+
+    const updateData = {
+      title: "Updated Title",
+      contentSummary: "Updated Summary",
+      type: "OUTGOING",
+      serialNumber: "PUT-001",
+    };
+
+    // Act
+    const response = await request(app)
+      .put(`/api/v1/documents/${document.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send(updateData);
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe(updateData.title);
+  });
+
+  it("should return 403 Forbidden if a user tries to update a document they do not own", async () => {
+    // Arrange
+    const ownerPayload = { id: "owner-user-id", roles: ["teacher"] };
+    const attackerPayload = { id: "attacker-user-id", roles: ["teacher"] };
+    const attackerToken = jwt.sign(attackerPayload, config.jwtSecret!);
+
+    const document = await prisma.document.create({
+      data: {
+        serialNumber: "PUT-002",
+        title: "Secret Document",
+        contentSummary: "Secret Summary",
+        type: "OUTGOING",
+        authorId: ownerPayload.id,
+      },
+    });
+
+    const updateData = {
+      title: "Hacked Titlte",
+      contentSummary: "Hacked Summary",
+      type: "INCOMING",
+      serialNumber: "PUT-002",
+    };
+
+    // Act
+    const response = await request(app)
+      .put(`/api/v1/documents/${document.id}`)
+      .set("Authorization", `Bearer ${attackerToken}`)
+      .send(updateData);
+
+    // Assert
+    expect(response.status).toBe(403);
+  });
 });

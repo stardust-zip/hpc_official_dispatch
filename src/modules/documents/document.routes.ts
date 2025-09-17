@@ -4,6 +4,7 @@ import { authenticate } from "../../core/middleware/auth.middleware";
 import { authorize } from "../../core/middleware/authorization.middleware";
 import { createDocumentValidator } from "./document.validator";
 import { handleValidationErrors } from "../../core/middleware/validation.middleware";
+import { updateDocumentValidator } from "./document.validator";
 
 // This file defines API endpoitns for documents
 // It connects the routes to authentication middleware and controller function
@@ -35,6 +36,15 @@ router.get(
   authenticate,
   authorize(["admin", "teacher"]),
   documentController.getDocumentById,
+);
+
+router.put(
+  "/:id",
+  authenticate,
+  authorize(["admin", "teacher"]),
+  updateDocumentValidator,
+  handleValidationErrors,
+  documentController.updateDocument,
 );
 
 export default router;
