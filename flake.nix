@@ -33,7 +33,7 @@
             # comment out one of these to use an alternative package manager.
 
             # pkgs.yarn
-            # pkgs.pnpm
+            pkgs.pnpm
             # pkgs.bun
 
             # Required to enable the language server

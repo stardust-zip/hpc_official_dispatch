@@ -59,4 +59,10 @@ export const documentRepository = {
       data,
     });
   },
+
+  async remove(id: string) {
+    return prisma.document.delete({
+      where: { id },
+    });
+  },
 };

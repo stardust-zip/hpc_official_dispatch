@@ -80,4 +80,20 @@ export const documentController = {
       res.status(500).json({ message: "Failed to update document." });
     }
   },
+
+  async deleteDocument(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      await documentService.deleteDocument(id);
+
+      res.status(204).send();
+    } catch (error) {
+      const err = error as Error;
+      if (err.message === "Document not found") {
+        return res.status(404).json({ message: err.message });
+      }
+
+      res.status(500).json({ message: "Failed to delete document" });
+    }
+  },
 };

@@ -48,4 +48,13 @@ export const documentService = {
 
     return documentRepository.update(documentId, data);
   },
+
+  async deleteDocument(documentId: string) {
+    const existingDocument = await documentRepository.findById(documentId);
+    if (!existingDocument) {
+      throw new Error("Document not found");
+    }
+
+    await documentRepository.remove(documentId);
+  },
 };

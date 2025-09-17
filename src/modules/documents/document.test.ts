@@ -184,3 +184,59 @@ describe("PUT /api/v1/documents/:id", () => {
     expect(response.status).toBe(403);
   });
 });
+
+describe("DELETE /api/v1/documents/:id", () => {
+  it("should allow an admin to delete any document", async () => {
+    // Arrange
+    const adminPayload = { id: "admin-user-id", roles: ["admin"] };
+    const adminToken = jwt.sign(adminPayload, config.jwtSecret!);
+
+    const document = await prisma.document.create({
+      data: {
+        serialNumber: "DEL-001",
+        title: "Document to be deleted",
+        contentSummary: "This document shall be deleted",
+        type: "INCOMING",
+        authorId: "some-other-user-id",
+      },
+    });
+
+    // Act
+    const response = await request(app)
+      .delete(`/api/v1/documents/${document.id}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    // Assert
+    expect(response.status).toBe(204); // 204 No Content is standard for successful delete
+
+    const foundDocument = await prisma.document.findUnique({
+      where: { id: document.id },
+    });
+
+    expect(foundDocument).toBeNull();
+  });
+
+  it("should return 403 Forbidden if a non-admin user tries to delete a document", async () => {
+    // Arrange
+    const teacherPayLoad = { id: "teacher-user-id", roles: ["teacher"] };
+    const teacherToken = jwt.sign(teacherPayLoad, config.jwtSecret!);
+
+    const document = await prisma.document.create({
+      data: {
+        serialNumber: "DEL-002",
+        title: "Protected Document",
+        contentSummary: "This document shoudln't be deleted by teacher",
+        type: "OUTGOING",
+        authorId: "another-user-id",
+      },
+    });
+
+    // Act
+    const response = await request(app)
+      .delete(`/api/v1/documents/${document.id}`)
+      .set("Authorization", `Bearer ${teacherToken}`);
+
+    // Assert
+    expect(response.status).toBe(403);
+  });
+});
