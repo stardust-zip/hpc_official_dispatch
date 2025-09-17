@@ -27,5 +27,34 @@ export const CreateDocumentSchema = z.object({
   }),
 });
 
-// Schema for the data required to UPDATE a document
 export const UpdateDocumentSchema = CreateDocumentSchema;
+
+const SubmitActionSchema = z.object({
+  action: z.literal("SUBMIT_FOR_APPROVAL"),
+  assigneeId: z.cuid(),
+  comment: z.string().optional(),
+});
+
+const ApproveActionSchema = z.object({
+  action: z.literal("APPROVE"),
+  comment: z.string().optional(),
+});
+
+const RejectActionSchema = z.object({
+  action: z.literal("REJECT"),
+  comment: z.string().optional(),
+});
+
+// Combine them into a single, smart schema
+// The 'action' field is the "discriminator" that decides which shape to use
+const ActionBodySchema = z.discriminatedUnion("action", [
+  SubmitActionSchema,
+  ApproveActionSchema,
+  RejectActionSchema,
+  // Add other actions like ISSUE here in the future
+]);
+
+// This is the final schema
+export const ActionSchema = z.object({
+  body: ActionBodySchema,
+});

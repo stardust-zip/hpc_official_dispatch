@@ -23,6 +23,14 @@ export interface UpdateDocumentData {
   type: "INCOMING" | "OUTGOING";
 }
 
+interface WorkflowUpdateParams {
+  status: "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED" | "ISSUED";
+  assigneeId?: string | null;
+  actorId: string;
+  action: string;
+  comment?: string;
+}
+
 // Manages all database operations for the Document model.
 export const documentRepository = {
   async create(data: CreateDocumentData) {
@@ -64,5 +72,27 @@ export const documentRepository = {
     return prisma.document.delete({
       where: { id },
     });
+  },
+
+  async updateStatusAndLog(documentId: string, params: WorkflowUpdateParams) {
+    return prisma.$transaction([
+      // Create a document
+      prisma.document.update({
+        where: { id: documentId },
+        data: {
+          status: params.status,
+          assigneeId: params.assigneeId,
+        },
+      }),
+      // Create a log entry for this action
+      prisma.workflowStep.create({
+        data: {
+          documentId: documentId,
+          actorId: params.actorId,
+          action: params.action,
+          comments: params.comment,
+        },
+      }),
+    ]);
   },
 };

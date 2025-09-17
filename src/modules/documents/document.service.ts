@@ -8,6 +8,12 @@ import {
 // It calls to the repo and performs logic before
 // returning data to controller
 
+interface ActionPayload {
+  action: string;
+  comment?: string;
+  assigneeId?: string;
+}
+
 // Encapsulates the business logic for managing documents.
 export const documentService = {
   async createNewDocument(data: CreateDocumentData) {
@@ -56,5 +62,67 @@ export const documentService = {
     }
 
     await documentRepository.remove(documentId);
+  },
+
+  async performWorkflowAction(
+    documentId: string,
+    actorId: string,
+    payload: ActionPayload,
+  ) {
+    const document = await documentRepository.findById(documentId);
+    if (!document) {
+      throw new Error("Document not found");
+    }
+
+    const { action, comment, assigneeId } = payload;
+
+    switch (action) {
+      case "SUBMIT_FOR_APPROVAL":
+        if (document.status !== "DRAFT") {
+          throw new Error(
+            "Invalid state transition: Can only submit a DRAFT document.",
+          );
+        }
+        if (document.authorId !== actorId) {
+          throw new Error(
+            "Forbidden: Only the author can submit for approval.",
+          );
+        }
+        const [updatedDoc] = await documentRepository.updateStatusAndLog(
+          documentId,
+          {
+            status: "PENDING_APPROVAL",
+            assigneeId: assigneeId,
+            actorId,
+            action,
+            comment,
+          },
+        );
+        return updatedDoc;
+
+      case "APPROVE":
+        if (document.status !== "PENDING_APPROVAL") {
+          throw new Error(
+            "Invalid state transition: Can only approve a PENDING_APPROVAL document.",
+          );
+        }
+        if (document.assigneeId !== actorId) {
+          throw new Error("Forbidden: You are not the assigned approver.");
+        }
+        const [approvedDoc] = await documentRepository.updateStatusAndLog(
+          documentId,
+          {
+            status: "APPROVED",
+            assigneeId: null, // Clear the assignee
+            actorId,
+            action,
+            comment,
+          },
+        );
+        return approvedDoc;
+
+      default:
+        throw new Error("Bad Request: Unknown action");
+    }
   },
 };

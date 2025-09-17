@@ -43,7 +43,6 @@ model Document {
   authorId   String  @map("author_id")
   assigneeId String? @map("assignee_id")
 
-  // Add the new status field
   status DocumentStatus @default(DRAFT)
 
   createdAt DateTime @default(now()) @map("created_at")

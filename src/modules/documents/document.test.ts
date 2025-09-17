@@ -240,3 +240,93 @@ describe("DELETE /api/v1/documents/:id", () => {
     expect(response.status).toBe(403);
   });
 });
+
+describe("POST /api/v1/documents/:id/actions", () => {
+  it("should allow the author to submit a DRAFT document for approval", async () => {
+    // Arrange
+    const authorPayload = { id: "author-user-id", roles: ["teacher"] };
+    const approverId = "clx5mzp0w0000a4b0d1e2f3g4";
+    const token = jwt.sign(authorPayload, config.jwtSecret!);
+
+    const document = await prisma.document.create({
+      data: {
+        serialNumber: "ACTION-001",
+        title: "Action Test Doc",
+        contentSummary: "Summary",
+        type: "OUTGOING",
+        authorId: authorPayload.id,
+        status: "DRAFT",
+      },
+    });
+
+    const actionPayload = {
+      action: "SUBMIT_FOR_APPROVAL",
+      assigneeId: approverId,
+      comment: "Please review.",
+    };
+
+    // Act
+    const response = await request(app)
+      .post(`/api/v1/documents/${document.id}/actions`)
+      .set("Authorization", `Bearer ${token}`)
+      .send(actionPayload);
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("PENDING_APPROVAL");
+    expect(response.body.assigneeId).toBe(approverId);
+  });
+
+  it("should allow an assinged user to APPROVE a document", async () => {
+    // Arrange
+    const approverPayload = { id: "approver-user-id", roles: ["admin"] };
+    const token = jwt.sign(approverPayload, config.jwtSecret!);
+
+    const document = await prisma.document.create({
+      data: {
+        serialNumber: "ACTION-002",
+        title: "To be Approved",
+        contentSummary: "Sumary",
+        type: "INCOMING",
+        authorId: "another-author",
+        status: "PENDING_APPROVAL",
+        assigneeId: approverPayload.id,
+      },
+    });
+
+    // Act
+    const response = await request(app)
+      .post(`/api/v1/documents/${document.id}/actions`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ action: "APPROVE", comment: "Approved" });
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("APPROVED");
+  });
+
+  it("should return 400 for an invalid state transistion (e.g., approving a DRAFT", async () => {
+    const userPayload = { id: "some-user-id", roles: ["teacher"] };
+    const token = jwt.sign(userPayload, config.jwtSecret!);
+
+    const document = await prisma.document.create({
+      data: {
+        serialNumber: "ACTION-003",
+        title: "Document Fail Transist",
+        contentSummary: "This document transistion shall fail",
+        type: "INCOMING",
+        authorId: "author-user-id",
+        status: "DRAFT",
+      },
+    });
+
+    // Act
+    const response = await request(app)
+      .post(`/api/v1/documents/${document.id}/actions`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ action: "APPROVE" });
+
+    // Assert
+    expect(response.status).toBe(400);
+  });
+});

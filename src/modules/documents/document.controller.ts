@@ -96,4 +96,33 @@ export const documentController = {
       res.status(500).json({ message: "Failed to delete document" });
     }
   },
+
+  async performAction(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const actorId = req.user!.id;
+      const payload = req.body;
+
+      const updatedDocument = await documentService.performWorkflowAction(
+        id,
+        actorId,
+        payload,
+      );
+      res.status(200).json(updatedDocument);
+    } catch (error) {
+      const err = error as Error;
+      if (err.message.startsWith("Forbidden"))
+        return res.status(403).json({ message: err.message });
+      if (
+        err.message.startsWith("Invalid state") ||
+        err.message.startsWith("Bad Request")
+      ) {
+        return res.status(400).json({ message: err.message });
+      }
+      if (err.message === "Document not found")
+        return res.status(404).json({ message: err.message });
+
+      res.status(500).json({ message: "Failed to perform action." });
+    }
+  },
 };

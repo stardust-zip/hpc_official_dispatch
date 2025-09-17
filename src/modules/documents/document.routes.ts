@@ -13,7 +13,9 @@ import {
   CreateDocumentSchema,
   DocumentSchema,
   UpdateDocumentSchema,
+  ActionSchema,
 } from "./document.schema";
+import { validate } from "../../core/middleware/zod.middleware";
 
 export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
   const router = Router();
@@ -141,6 +143,38 @@ export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
     authenticate,
     authorize(["admin"]),
     documentController.deleteDocument,
+  );
+
+  // POST /documents/{id}/actions
+  registry.registerPath({
+    method: "post",
+    path: "/documents/{id}/actions",
+    summary: "Perform a workflow action on a document",
+    tags: ["Workflow"],
+    request: {
+      params: z.object({ id: z.string().cuid() }),
+      body: {
+        content: {
+          "application/json": { schema: ActionSchema.shape.body },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: "Action performed successfully",
+        content: { "application/json": { schema: DocumentSchema } },
+      },
+      400: { description: "Bad Request (e.g., invalid action or state)" },
+      ...commonResponses,
+    },
+  });
+
+  router.post(
+    "/:id/actions",
+    authenticate,
+    authorize(["admin", "teacher"]),
+    validate(ActionSchema),
+    documentController.performAction,
   );
 
   return router;
