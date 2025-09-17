@@ -13,9 +13,6 @@
     "db:migrate:dev": "pnpm prisma migrate dev",
     "db:migrate:test": "dotenv -e .env.test -- pnpm prisma migrate dev"
   },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
