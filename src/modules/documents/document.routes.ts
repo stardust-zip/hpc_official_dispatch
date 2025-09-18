@@ -152,7 +152,7 @@ export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
     summary: "Perform a workflow action on a document",
     tags: ["Workflow"],
     request: {
-      params: z.object({ id: z.string().cuid() }),
+      params: z.object({ id: z.cuid() }),
       body: {
         content: {
           "application/json": { schema: ActionSchema.shape.body },

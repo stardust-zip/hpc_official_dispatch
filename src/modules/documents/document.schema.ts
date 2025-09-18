@@ -3,6 +3,15 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 
 extendZodWithOpenApi(z);
 
+const RecipientInfoSchema = z
+  .object({
+    name: z.string(),
+    address: z.string().optional(),
+    department: z.string().optional(),
+    email: z.email().optional(),
+  })
+  .openapi("RecipientInfo");
+
 export const DocumentSchema = z.object({
   id: z.cuid().openapi({ example: "clx3x8y7z0000a4b0d1e2f3g4" }),
   serialNumber: z.string().openapi({ example: "2025/CV-HPC" }),
@@ -21,6 +30,7 @@ export const DocumentSchema = z.object({
   ]),
   createdAt: z.iso.datetime().openapi({ example: "2025-09-17T13:30:00Z" }),
   updatedAt: z.iso.datetime().openapi({ example: "2025-09-17T14:00:00Z" }),
+  recipientInfo: RecipientInfoSchema.nullable(),
 });
 
 export const CreateDocumentSchema = z.object({
@@ -31,6 +41,7 @@ export const CreateDocumentSchema = z.object({
       .string()
       .openapi({ example: "Details about the new dispatch." }),
     type: z.enum(["INCOMING", "OUTGOING"]),
+    recipientInfo: RecipientInfoSchema.optional(),
   }),
 });
 

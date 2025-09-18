@@ -54,7 +54,7 @@ function startServer() {
   // Start listening for requests
   app.listen(config.port, () => {
     console.log(
-      `hpc_official_dispatch service is running on port ${config.port}`,
+      `hpc_official_dispatch service is running on port${config.port}`,
     );
   });
 }

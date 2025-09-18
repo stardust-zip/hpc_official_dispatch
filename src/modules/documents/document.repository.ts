@@ -14,6 +14,7 @@ export interface CreateDocumentData {
   contentSummary: string;
   type: "INCOMING" | "OUTGOING";
   authorId: string;
+  recipientInfo?: { [key: string]: any };
 }
 
 export interface UpdateDocumentData {
