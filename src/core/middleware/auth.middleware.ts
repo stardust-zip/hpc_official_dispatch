@@ -9,8 +9,16 @@ import { config } from "../../config";
 // 2. attches user ID to the request
 
 // Extend the Express Request type to include our user payload
+// export interface AuthenticatedRequest extends Request {
+//   user?: { id: string; roles: string[] }; // Payload from the JWT
+// }
+// Update based on the hpc_user service's shape
 export interface AuthenticatedRequest extends Request {
-  user?: { id: string; roles: string[] }; // Payload from the JWT
+  user?: {
+    id: string;
+    role: "teacher" | "student";
+    isAdmin?: boolean;
+  };
 }
 
 // Middleware to authenticate requests by validating a JWT.
@@ -34,9 +42,10 @@ export const authenticate = (
     // Verify the token using the shared secret key
     const decoded = jwt.verify(token, config.jwtSecret!) as {
       id: string;
-      roles: string[];
+      role: "teacher" | "student";
+      isAdmin?: boolean;
     };
-    req.user = decoded; // Attach user payload to the request object
+    req.user = decoded;
     next();
   } catch (error) {
     return res.status(403).json({ message: "Invalid or expired token." });

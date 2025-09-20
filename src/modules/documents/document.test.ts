@@ -8,7 +8,11 @@ import { prisma } from "./document.repository";
 describe("POST /api/v1/documents", () => {
   it("should create a new document successfully for an authenticated user", async () => {
     // 1. Arrange: Create a mock JWT token for an authenticated user
-    const userPayload = { id: "user-cuid-from-hpc-user", roles: ["teacher"] };
+    const userPayload = {
+      id: "user-cuid-from-hpc-user",
+      role: "teacher",
+      isAdmin: false,
+    };
     const token = jwt.sign(userPayload, config.jwtSecret!);
 
     const newDocumentData = {
@@ -38,7 +42,11 @@ describe("POST /api/v1/documents", () => {
   });
 
   it("should return 400 Bad Request if data is invalid", async () => {
-    const userPayload = { id: "user-cuid-123", roles: ["teacher"] };
+    const userPayload = {
+      id: "user-cuid-123",
+      role: "teacher",
+      isAdmin: false,
+    };
     const token = jwt.sign(userPayload, config.jwtSecret!);
 
     const response = await request(app)
@@ -52,7 +60,7 @@ describe("POST /api/v1/documents", () => {
 
   it('should return 404 Forbidden if a user with "student" role tries to create a document', async () => {
     // 1. Arrange: Create token for a user with "student" role
-    const studentPayload = { id: "student-user-id", role: ["student"] };
+    const studentPayload = { id: "student-user-id", role: "student" };
     const token = jwt.sign(studentPayload, config.jwtSecret!);
 
     const newDocumentData = {
@@ -62,7 +70,6 @@ describe("POST /api/v1/documents", () => {
       type: "INCOMING",
     };
 
-    // 2. Act: Send the request as the student
     const response = await request(app)
       .post("/api/v1/documents")
       .set("Authorization", `Bearer ${token}`)
@@ -76,7 +83,11 @@ describe("POST /api/v1/documents", () => {
 describe("GET /api/v1/documents/:id", () => {
   it("should retrieve a specific document successfully", async () => {
     // 1. Arrange: Create a document directly in the test db
-    const userPayload = { id: "user-id-for-get-test", roles: ["teacher"] };
+    const userPayload = {
+      id: "user-id-for-get-test",
+      role: "teacher",
+      isAdmin: false,
+    };
     const token = jwt.sign(userPayload, config.jwtSecret!);
 
     const createdDocument = await prisma.document.create({
@@ -102,7 +113,11 @@ describe("GET /api/v1/documents/:id", () => {
 
   it("should return 404 Not Found for non existent document ID", async () => {
     // Arrange
-    const userPayload = { id: "user-id-for-404-test", roles: ["teacher"] };
+    const userPayload = {
+      id: "user-id-for-404-test",
+      role: "teacher",
+      isAdmin: false,
+    };
     const token = jwt.sign(userPayload, config.jwtSecret!);
     const nonExistentId = "cl63x8y7z0000a4b0d1e2f3g4";
 
@@ -120,7 +135,11 @@ describe("GET /api/v1/documents/:id", () => {
 describe("PUT /api/v1/documents/:id", () => {
   it("should allow author to update their own document", async () => {
     // Arrange
-    const userPayload = { id: "author-user-id", roles: ["teacher"] };
+    const userPayload = {
+      id: "author-user-id",
+      role: "teacher",
+      isAdmin: false,
+    };
     const token = jwt.sign(userPayload, config.jwtSecret!);
 
     const document = await prisma.document.create({
@@ -153,8 +172,16 @@ describe("PUT /api/v1/documents/:id", () => {
 
   it("should return 403 Forbidden if a user tries to update a document they do not own", async () => {
     // Arrange
-    const ownerPayload = { id: "owner-user-id", roles: ["teacher"] };
-    const attackerPayload = { id: "attacker-user-id", roles: ["teacher"] };
+    const ownerPayload = {
+      id: "owner-user-id",
+      role: "teacher",
+      isAdmin: false,
+    };
+    const attackerPayload = {
+      id: "attacker-user-id",
+      role: "teacher",
+      isAdmin: false,
+    };
     const attackerToken = jwt.sign(attackerPayload, config.jwtSecret!);
 
     const document = await prisma.document.create({
@@ -188,7 +215,11 @@ describe("PUT /api/v1/documents/:id", () => {
 describe("DELETE /api/v1/documents/:id", () => {
   it("should allow an admin to delete any document", async () => {
     // Arrange
-    const adminPayload = { id: "admin-user-id", roles: ["admin"] };
+    const adminPayload = {
+      id: "admin-user-id",
+      role: "teacher",
+      isAdmin: true,
+    };
     const adminToken = jwt.sign(adminPayload, config.jwtSecret!);
 
     const document = await prisma.document.create({
@@ -218,7 +249,11 @@ describe("DELETE /api/v1/documents/:id", () => {
 
   it("should return 403 Forbidden if a non-admin user tries to delete a document", async () => {
     // Arrange
-    const teacherPayLoad = { id: "teacher-user-id", roles: ["teacher"] };
+    const teacherPayLoad = {
+      id: "teacher-user-id",
+      role: "teacher",
+      isAdmin: false,
+    };
     const teacherToken = jwt.sign(teacherPayLoad, config.jwtSecret!);
 
     const document = await prisma.document.create({
@@ -244,7 +279,11 @@ describe("DELETE /api/v1/documents/:id", () => {
 describe("POST /api/v1/documents/:id/actions", () => {
   it("should allow the author to submit a DRAFT document for approval", async () => {
     // Arrange
-    const authorPayload = { id: "author-user-id", roles: ["teacher"] };
+    const authorPayload = {
+      id: "author-user-id",
+      role: "teacher",
+      isAdmin: false,
+    };
     const approverId = "clx5mzp0w0000a4b0d1e2f3g4";
     const token = jwt.sign(authorPayload, config.jwtSecret!);
 
@@ -279,7 +318,11 @@ describe("POST /api/v1/documents/:id/actions", () => {
 
   it("should allow an assinged user to APPROVE a document", async () => {
     // Arrange
-    const approverPayload = { id: "approver-user-id", roles: ["admin"] };
+    const approverPayload = {
+      id: "approver-user-id",
+      role: "teacher",
+      isAdmin: true,
+    };
     const token = jwt.sign(approverPayload, config.jwtSecret!);
 
     const document = await prisma.document.create({
@@ -306,7 +349,11 @@ describe("POST /api/v1/documents/:id/actions", () => {
   });
 
   it("should return 400 for an invalid state transistion (e.g., approving a DRAFT", async () => {
-    const userPayload = { id: "some-user-id", roles: ["teacher"] };
+    const userPayload = {
+      id: "some-user-id",
+      role: "teacher",
+      isAdmin: false,
+    };
     const token = jwt.sign(userPayload, config.jwtSecret!);
 
     const document = await prisma.document.create({
@@ -332,7 +379,11 @@ describe("POST /api/v1/documents/:id/actions", () => {
 
   it("should allow an assigned user to REJECT a document", async () => {
     // Arrange
-    const approverPayload = { id: "approver-user-id", roles: ["admin"] };
+    const approverPayload = {
+      id: "approver-user-id",
+      role: "teacher",
+      isAdmin: true,
+    };
     const token = jwt.sign(approverPayload, config.jwtSecret!);
 
     const document = await prisma.document.create({
@@ -361,7 +412,11 @@ describe("POST /api/v1/documents/:id/actions", () => {
 
   it("should allow the author to ISSUE an approved document", async () => {
     // Arrange
-    const authorPayload = { id: "author-user-id", roles: ["teacher"] };
+    const authorPayload = {
+      id: "author-user-id",
+      role: "teacher",
+      isAdmin: false,
+    };
     const token = jwt.sign(authorPayload, config.jwtSecret!);
 
     const document = await prisma.document.create({
