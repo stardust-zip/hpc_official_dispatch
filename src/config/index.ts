@@ -1,8 +1,4 @@
-import dotenv from "dotenv";
-
 // This file loads and exports environment variables
-
-dotenv.config(); // Load variables from .env file
 
 // A central place for all environment variables
 export const config = {
