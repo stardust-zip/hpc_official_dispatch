@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Create a single registry for the entire app
-const registry = new OpenAPIRegistry();
+export const registry = new OpenAPIRegistry();
 
 // Register the security component
 registry.registerComponent("securitySchemes", "bearerAuth", {

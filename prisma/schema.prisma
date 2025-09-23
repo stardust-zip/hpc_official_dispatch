@@ -58,7 +58,7 @@ model Document {
 // Represents a single step in a document's lifecycle
 model WorkflowStep {
   id         String   @id @default(cuid())
-  document   Document @relation(fields: [documentId], references: [id])
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   documentId String   @map("document_id")
 
   // The user from hpc_user who performed this action
