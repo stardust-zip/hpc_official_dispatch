@@ -68,7 +68,7 @@ export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
     summary: "Get a single document by ID",
     tags: ["Documents"],
     request: {
-      params: z.object({ id: z.string().cuid() }),
+      params: z.object({ id: z.cuid() }),
     },
     responses: {
       200: {
@@ -95,7 +95,7 @@ export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
     summary: "Update an existing document",
     tags: ["Documents"],
     request: {
-      params: z.object({ id: z.string().cuid() }),
+      params: z.object({ id: z.cuid() }),
       body: {
         content: {
           "application/json": { schema: UpdateDocumentSchema.shape.body },
@@ -130,7 +130,7 @@ export const createDocumentRouter = (registry: OpenAPIRegistry): Router => {
     summary: "Delete a document (Admins only)",
     tags: ["Documents"],
     request: {
-      params: z.object({ id: z.string().cuid() }),
+      params: z.object({ id: z.cuid() }),
     },
     responses: {
       204: { description: "Document deleted successfully" },

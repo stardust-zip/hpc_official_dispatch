@@ -1,4 +1,4 @@
-import express, { Application, Request, Response } from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
@@ -10,7 +10,7 @@ import {
 import { config } from "./config";
 import { createDocumentRouter } from "./modules/documents/document.routes";
 
-export const app: Application = express();
+export const app = express();
 
 app.use(cors());
 app.use(helmet());

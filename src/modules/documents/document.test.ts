@@ -33,6 +33,7 @@ describe("POST /api/v1/documents", () => {
     expect(response.body).toHaveProperty("id");
     expect(response.body.title).toBe(newDocumentData.title);
     expect(response.body.authorId).toBe(userPayload.id);
+    expect(response.body.contentSummary).toBe(newDocumentData.contentSummary);
   });
 
   it("should return 401 Unauthorized if no token is provided", async () => {
